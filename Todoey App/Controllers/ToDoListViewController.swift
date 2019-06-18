@@ -10,38 +10,21 @@ import UIKit
 
 class ToDoListViewController: UITableViewController {
     
-    
-    
-
+ 
     var itemArray = [Item]()
-    
-   // var itemModel = ["Clean Desk": true, "Walk The Doggie": false, "Give Mommy,Daddy,and Simba Hugs": true]
-    
-    let defaults = UserDefaults.standard
+    let dataFilePath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?.appendingPathComponent("Items.plist")
+
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let newItem1 = Item()
-        newItem1.tittle = "Hug Simba"
-       
-        itemArray.append(newItem1)
         
-        let newItem2 = Item()
-        newItem2.tittle = "Hug Mom"
-        itemArray.append(newItem2)
+        print(dataFilePath)
         
-        let newItem3 = Item()
-        newItem3.tittle = "Hug Dad"
-        itemArray.append(newItem3)
-        
-       
+       loadItems()
         
         
-        
-       if let items = defaults.array(forKey: "ToDoListArray") as? [Item]{
-            itemArray = items
-}
+
       
     }
     
@@ -68,17 +51,10 @@ let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: in
         // Tableview Delegate Methods
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-       // print(itemArray[indexPath.row])
         
         itemArray[indexPath.row].done = !itemArray[indexPath.row].done
         
-
-        
-        
-        tableView.reloadData()
-        
-       
-        
+        saveItems()
         
         tableView.deselectRow(at: indexPath, animated: true)
     }
@@ -98,10 +74,9 @@ let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: in
             newItem.tittle = textField.text!
             
             self.itemArray.append(newItem)
+            self.saveItems()
             
-            self.defaults.set(self.itemArray, forKey: "ToDoListArray")
-            
-            self.tableView.reloadData()
+
         }
         
         alert.addTextField { (alertTextField) in
@@ -115,6 +90,44 @@ let cell = tableView.dequeueReusableCell(withIdentifier: "ToDoItemCell", for: in
         
     }
     
+    
+    //MARK - Model Manipulation Methods
+    
+    func saveItems(){
+        
+        let encoder = PropertyListEncoder()
+        
+        do{
+            let data = try encoder.encode(itemArray)
+            try data.write(to: dataFilePath!)
+        }
+            
+        catch{
+            print("Error encoding item array\(error)")
+            
+        }
+        
+        
+        self.tableView.reloadData()
+        
+    }
+    
+    func loadItems() {
+       if let data = try? Data(contentsOf: dataFilePath!) {
+            
+                let decoder = PropertyListDecoder()
+            do{
+        itemArray = try decoder.decode([Item].self, from: data)
+                
+            }
+            
+            catch{
+                print("Error decoding item array\(error)")
+            }
+                
+        }
+        
+    }
 }
 
 
